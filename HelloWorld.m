@@ -39,7 +39,11 @@ end
 [returnCode,lightSensor]=vrep.simxGetObjectHandle(clientID,'ePuck_lightSensor',vrep.simx_opmode_blocking);
 
 
+minlim = 1;
+maxlim = 16;
 
+maxspeed = 0.6;
+minspeed = 0.40;
 
 % Inicia simulação do vrep
 [returnCode] = vrep.simxStartSimulation(clientID,vrep.simx_opmode_oneshot);
@@ -50,19 +54,26 @@ end
 %[returnCode,~,detectedPoint,detectedObjectHandle,~]=vrep.simxReadProximitySensor(clientID,lightSensor,vrep.simx_opmode_streaming);
 image = zeros(2,16);
 [returnCode,resolution,image]=vrep.simxGetVisionSensorImage2(clientID,lightSensor,1,vrep.simx_opmode_streaming)
-
+upperhalf = (resolution(1)/2 + 1):resolution(1);
+lowerhalf = 1:(resolution(1)/2);
 for i = 1:2000
     [returnCode,resolution,image]=vrep.simxGetVisionSensorImage2(clientID,lightSensor,1,vrep.simx_opmode_buffer);
     if(~isempty(image))
-        image(image>200) = 200;
-        image(image <40) = 0;
-        if(image(1,8) > image(2,8) || image(1,1) > image(2,1) || image(1,16) > image(2,16) )
-            [returnCode]=vrep.simxSetJointTargetVelocity(clientID,leftWheel,0.85,vrep.simx_opmode_oneshot);
-            [returnCode]=vrep.simxSetJointTargetVelocity(clientID,rightWheel,0.15,vrep.simx_opmode_oneshot);
+        image(image>128) = 200;
+        image(image <100) = 0;
+%         [returnCode]=vrep.simxSetJointTargetVelocity(clientID,rightWheel,0.5,vrep.simx_opmode_oneshot);
+%         [returnCode]=vrep.simxSetJointTargetVelocity(clientID,leftWheel,0.5,vrep.simx_opmode_oneshot);
+        %if(image(1,8) > image(2,8) || image(1,4) > image(2,4) || image(1,1) > image(2,1) || image(1,12) > image(2,12) || image(1,16) > image(2,16) )
+        %if(~isempty(find(image(1,minlim:maxlim) > image(2,minlim:maxlim))))
+        if(~isempty(find(image(:,1:8)>image(:,  9:end))))
+            [returnCode]=vrep.simxSetJointTargetVelocity(clientID,leftWheel,maxspeed,vrep.simx_opmode_oneshot);
+            [returnCode]=vrep.simxSetJointTargetVelocity(clientID,rightWheel,minspeed,vrep.simx_opmode_oneshot);
         end
-        if(image(1,8) < image(2,8) || image(1,1) < image(2,1) || image(1,16) < image(2,16) )
-            [returnCode]=vrep.simxSetJointTargetVelocity(clientID,rightWheel,0.85,vrep.simx_opmode_oneshot);
-            [returnCode]=vrep.simxSetJointTargetVelocity(clientID,leftWheel,0.15,vrep.simx_opmode_oneshot);
+        %if(image(1,8) < image(2,8) || image(1,4) < image(2,4) || image(1,1) < image(2,1) || image(1,12) < image(2,12) || image(1,16) < image(2,16) )
+        %if(~isempty(find(image(1,minlim:maxlim) < image(2,minlim:maxlim))))
+        if(~isempty(find(image(:,1:8)<image(:,  9:end))))
+            [returnCode]=vrep.simxSetJointTargetVelocity(clientID,rightWheel,maxspeed,vrep.simx_opmode_oneshot);
+            [returnCode]=vrep.simxSetJointTargetVelocity(clientID,leftWheel,minspeed,vrep.simx_opmode_oneshot);
         end
 %         if(image(1,8) == image(2,8))
 %             [returnCode]=vrep.simxSetJointTargetVelocity(clientID,rightWheel,0.5,vrep.simx_opmode_oneshot);
