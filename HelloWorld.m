@@ -33,7 +33,7 @@ while(retCod == 0)
         fprintf ('Waiting\n');
     end
 end
-%handle pro motor esquerdo
+%handle para as partes desejadas do ePuck
 [returnCode,leftWheel]=vrep.simxGetObjectHandle(clientID,'ePuck_leftJoint',vrep.simx_opmode_blocking);
 [returnCode,rightWheel]=vrep.simxGetObjectHandle(clientID,'ePuck_rightJoint',vrep.simx_opmode_blocking);
 [returnCode,lightSensor]=vrep.simxGetObjectHandle(clientID,'ePuck_lightSensor',vrep.simx_opmode_blocking);
@@ -45,6 +45,9 @@ end
 [returnCode,proxSensor6]=vrep.simxGetObjectHandle(clientID,'ePuck_proxSensor6',vrep.simx_opmode_blocking);
 [returnCode,proxSensor7]=vrep.simxGetObjectHandle(clientID,'ePuck_proxSensor7',vrep.simx_opmode_blocking);
 [returnCode,proxSensor8]=vrep.simxGetObjectHandle(clientID,'ePuck_proxSensor8',vrep.simx_opmode_blocking);
+
+% Definicoes de variaveis
+wd = 53*10^-3   % wheel distance: 53 mm
 
 minlim = 1;
 maxlim = 16;
@@ -64,13 +67,27 @@ image = zeros(2,16);
 upperhalf = (resolution(1)/2 + 1):resolution(1);
 lowerhalf = 1:(resolution(1)/2);
 
-[returnCode,detectionState,detectedPoint,detectedObjectHandle,~]=vrep.simxReadProximitySensor(clientID,proxSensor4,vrep.simx_opmode_streaming)
+[returnCode,detectionState1,detectedPoint1,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor1,vrep.simx_opmode_streaming)
+[returnCode,detectionState2,detectedPoint2,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor2,vrep.simx_opmode_streaming)
+[returnCode,detectionState3,detectedPoint3,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor3,vrep.simx_opmode_streaming)
+[returnCode,detectionState4,detectedPoint4,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor4,vrep.simx_opmode_streaming)
+[returnCode,detectionState5,detectedPoint5,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor5,vrep.simx_opmode_streaming)
+[returnCode,detectionState6,detectedPoint6,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor6,vrep.simx_opmode_streaming)
+[returnCode,detectionState7,detectedPoint7,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor7,vrep.simx_opmode_streaming)
+[returnCode,detectionState8,detectedPoint8,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor8,vrep.simx_opmode_streaming)
 for i = 1:1000
     [returnCode,resolution,image]=vrep.simxGetVisionSensorImage2(clientID,lightSensor,1,vrep.simx_opmode_buffer);
-    [returnCode,detectionState,detectedPoint,detectedObjectHandle,~]=vrep.simxReadProximitySensor(clientID,proxSensor4,vrep.simx_opmode_buffer)
-    if(detectionState~= 0)
-        [returnCode]=vrep.simxSetJointTargetVelocity(clientID,leftWheel,minspeed/2,vrep.simx_opmode_oneshot);
-        [returnCode]=vrep.simxSetJointTargetVelocity(clientID,rightWheel,2*maxspeed,vrep.simx_opmode_oneshot);
+    [returnCode,detectionState2,detectedPoint2,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor2,vrep.simx_opmode_buffer);
+    [returnCode,detectionState3,detectedPoint3,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor3,vrep.simx_opmode_buffer);
+    [returnCode,detectionState4,detectedPoint4,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor4,vrep.simx_opmode_buffer);
+    [returnCode,detectionState5,detectedPoint5,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor5,vrep.simx_opmode_buffer);
+    [returnCode,detectionState6,detectedPoint6,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor6,vrep.simx_opmode_buffer);
+    if(detectionState6 ~= 0  )    %Gire bruscamente se tem algo em frente
+        [returnCode]=vrep.simxSetJointTargetVelocity(clientID,leftWheel,maxspeed,vrep.simx_opmode_oneshot);
+        [returnCode]=vrep.simxSetJointTargetVelocity(clientID,rightWheel,(maxspeed)*(wd-0.005),vrep.simx_opmode_oneshot);
+    elseif(detectionState4 ~= 0)
+        [returnCode]=vrep.simxSetJointTargetVelocity(clientID,leftWheel,minspeed/4,vrep.simx_opmode_oneshot);
+        [returnCode]=vrep.simxSetJointTargetVelocity(clientID,rightWheel,maxspeed*4,vrep.simx_opmode_oneshot);
     elseif(~isempty(image))
         image(image>128) = 200;
         image(image <100) = 0;
