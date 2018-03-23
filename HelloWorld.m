@@ -84,7 +84,7 @@ lowerhalf = 1:(resolution(1)/2);
 [returnCode,detectionState6,detectedPoint6,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor6,vrep.simx_opmode_streaming);
 [returnCode,detectionState7,detectedPoint7,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor7,vrep.simx_opmode_streaming);
 [returnCode,detectionState8,detectedPoint8,~,~]=vrep.simxReadProximitySensor(clientID,proxSensor8,vrep.simx_opmode_streaming);
-for i = 1:10000
+for i = 1:1000
     [returnCode,resolution,image]=vrep.simxGetVisionSensorImage2(clientID,lightSensor,1,vrep.simx_opmode_buffer);
     [returnCode,detectionState1,detectedPoint(1,1:3),~,~]=vrep.simxReadProximitySensor(clientID,proxSensor1,vrep.simx_opmode_buffer);
     [returnCode,detectionState2,detectedPoint(2,1:3),~,~]=vrep.simxReadProximitySensor(clientID,proxSensor2,vrep.simx_opmode_buffer);
@@ -104,23 +104,26 @@ for i = 1:10000
 %         [returnCode]=vrep.simxSetJointTargetVelocity(clientID,leftWheel,minspeed/4,vrep.simx_opmode_oneshot);
 %         [returnCode]=vrep.simxSetJointTargetVelocity(clientID,rightWheel,maxspeed*4,vrep.simx_opmode_oneshot);
 
-    if(~isempty(image) &(~isempty(find(image(:,1:8)>image(:,  9:end))) |(~isempty(find(image(:,1:8)<image(:,  9:end))))) & (proxSensDist(2) + proxSensDist(3) + proxSensDist(4) + proxSensDist(5) <= noDetectionDistance*4))
-        disp('segue linha')
+    if(~isempty(image)  & (proxSensDist(2) + proxSensDist(3) + proxSensDist(4) + proxSensDist(5) <= noDetectionDistance))
+        %disp('segue linha')
             image(image>128) = 200;
             image(image <100) = 0;
 
             if(~isempty(find(image(:,1:8)>image(:,  9:end))))
+%                 disp('desvio direita')
                 velLeft = maxspeed;
                 velRight = minspeed;
             end
             if(~isempty(find(image(:,1:8)<image(:,  9:end))))
-                velLeft = maxspeed;
-                velRight = minspeed;
+%                 disp('desvio esquerda')
+                velLeft = minspeed;
+                velRight = maxspeed;
             end
     else
+        disp('entrou else')
         velLeft = maxspeed;
         velRight = maxspeed;
-        if(proxSensDist(2) + proxSensDist(3) + proxSensDist(4) + proxSensDist(5) <= noDetectionDistance*4) 
+        if(proxSensDist(2) + proxSensDist(3) + proxSensDist(4) + proxSensDist(5) <= noDetectionDistance) 
             %fprintf('Distancia = %d\n', proxSensDist(2) + proxSensDist(3) + proxSensDist(4) + proxSensDist(5))
             %Não foi detectado nenhum objeto na frente, mas pode ser que haja
             %algum ao lado
@@ -147,10 +150,12 @@ for i = 1:10000
         end
 %         velLeft
 %         velRight
-    [returnCode]=vrep.simxSetJointTargetVelocity(clientID,leftWheel,velLeft,vrep.simx_opmode_streaming);
-    [returnCode]=vrep.simxSetJointTargetVelocity(clientID,rightWheel,velRight,vrep.simx_opmode_streaming);
-    pause(0.01 )
+
     end
+    disp('ping')
+    [returnCode]=vrep.simxSetJointTargetVelocity(clientID,leftWheel,velLeft,vrep.simx_opmode_oneshot);
+    [returnCode]=vrep.simxSetJointTargetVelocity(clientID,rightWheel,velRight,vrep.simx_opmode_oneshot);
+    pause(0.01 )
 end
 %pause(3)
 
